@@ -11,7 +11,7 @@ cask "weekloom" do
   desc "Local-first Gantt-chart planner that makes no network requests"
   homepage "https://github.com/MoizDev/weekloom"
 
-  depends_on macos: ">= :big_sur"
+  depends_on macos: :big_sur
 
   app "Weekloom.app"
 

@@ -11,8 +11,13 @@ it up, delete it to start over.
 
 ```bash
 brew tap moizdev/weekloom https://github.com/MoizDev/weekloom
+brew trust --cask moizdev/weekloom/weekloom
 brew install --cask --no-quarantine weekloom
 ```
+
+The middle line is Homebrew's own safety check on taps outside its official catalogs — it asks you
+to confirm, once, that you trust code from this repository. Skip it and `install` refuses with
+_"Refusing to load cask … from untrusted tap"_.
 
 ⚠️ **`--no-quarantine` is not optional.** Weekloom is not signed with an Apple Developer ID, so
 macOS quarantines it on download and Gatekeeper refuses to open it — with the actively misleading
