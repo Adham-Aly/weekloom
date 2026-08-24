@@ -3,8 +3,38 @@
 A Gantt-chart planner that runs entirely on your own computer: a **board** holds **blocks** (lanes),
 a block holds **tasks**, a task spans **steps**, one per day. No account, no sign-in, no network
 requests — your whole plan is one SQLite file at `~/.weekloom/weekloom.db`; copy that folder to back
-it up, delete it to start over. From source you need [Node.js](https://nodejs.org) 24+ — `node:sqlite`
-is built in, so there is no native module to compile.
+it up, delete it to start over.
+
+## Install
+
+### macOS — Homebrew
+
+```bash
+brew tap moizdev/weekloom https://github.com/MoizDev/weekloom
+brew install --cask --no-quarantine weekloom
+```
+
+⚠️ **`--no-quarantine` is not optional.** Weekloom is not signed with an Apple Developer ID, so
+macOS quarantines it on download and Gatekeeper refuses to open it — with the actively misleading
+message _"Weekloom is damaged and can't be opened. You should move it to the Trash."_ The app is
+not damaged; the flag simply skips the quarantine attribute that triggers that check. If you
+already installed without it: `xattr -dr com.apple.quarantine /Applications/Weekloom.app`.
+
+Both Apple Silicon and Intel are covered. `brew upgrade --cask weekloom` updates,
+`brew uninstall --cask weekloom` removes the app — neither touches `~/.weekloom`, so your plan
+survives both.
+
+### Windows and Linux
+
+**Homebrew does not exist on Windows**, so there is no `brew` line to give you. Download the
+installer for your platform from [Releases](https://github.com/MoizDev/weekloom/releases):
+`.exe` on Windows, `.AppImage` or `.deb` on Linux. Windows SmartScreen will warn about an unknown
+publisher for the same reason macOS does — "More info" → "Run anyway".
+
+### From source
+
+You need [Node.js](https://nodejs.org) 24+ — `node:sqlite` is built in, so there is no native
+module to compile.
 
 ```bash
 npm install
