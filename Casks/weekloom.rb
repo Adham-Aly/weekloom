@@ -1,9 +1,9 @@
 cask "weekloom" do
   arch arm: "-arm64", intel: ""
 
-  version "0.1.1"
-  sha256 arm:   "1ec87d35d6e2cae47d12a2df8f62e08c68ad5fde3bc84dd4bfdfc9247a4c1b58",
-         intel: "2d6ed135718adfd7f73c9c6dd2c0c0e1085ff8f95ccba66f3de6c802faad71d0"
+  version "0.1.2"
+  sha256 arm:   "912d15a92dab3fd435359840f3fb1c6a9ff352daad3467a67f996db513e9702b",
+         intel: "0a5fe87d149b3936f0ede6c79b3438239c7acd385e8715e7c3dc4bd193d096b8"
 
   url "https://github.com/MoizDev/weekloom/releases/download/v#{version}/Weekloom-#{version}#{arch}.dmg",
       verified: "github.com/MoizDev/weekloom/"
