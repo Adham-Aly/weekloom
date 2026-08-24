@@ -61,6 +61,16 @@ export default function RootLayout({
   return (
     <html
       lang="en"
+      /* ⚠️ Load-bearing, and it must agree with `DEFAULT_SETTINGS.theme`.
+       *  `globals.css` is dark-first: `:root` IS the dark palette and
+       *  `[data-theme="light"]` overrides it. So an <html> with no attribute
+       *  paints DARK, whatever the stored setting says — the light default
+       *  would then only arrive at hydration, as a dark flash on every single
+       *  launch. Stating the default here means the very first paint is
+       *  already right; the bootstrap script below overrides it for anyone who
+       *  chose otherwise. If the CSS is ever inverted to light-first, this
+       *  attribute has to move with it. */
+      data-theme="light"
       className={`${googleSans.variable} ${geistSans.variable} ${geistMono.variable} ${libre.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col bg-bg text-text">

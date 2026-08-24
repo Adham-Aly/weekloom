@@ -121,13 +121,19 @@ test.describe("the board picker", () => {
 
   test("opens in the stored theme with an empty cache", async ({ page }) => {
     await page.goto("/settings");
-    const light = page
+    // ⚠️ Dark, because light is the DEFAULT. The value this test moves to has
+    // to be the one the app would not have shown anyway, or the positive
+    // control below is vacuous and the assertion could be satisfied by a
+    // picker that read nothing at all. It asserted "Light" while dark was the
+    // default; when the default flipped, that setup started asserting that the
+    // app was already in the state it was about to select.
+    const dark = page
       .locator('[data-setting-row="Theme"]')
-      .getByRole("button", { name: "Light", exact: true });
-    // Positive control on the setup: the stored value is NOT already light, so
+      .getByRole("button", { name: "Dark", exact: true });
+    // Positive control on the setup: the stored value is NOT already dark, so
     // the picker assertion below is about a value that actually moved.
-    await expect(light).toHaveAttribute("aria-pressed", "false");
-    await light.click();
+    await expect(dark).toHaveAttribute("aria-pressed", "false");
+    await dark.click();
     await expect(page.getByText("Saved")).toBeVisible();
 
     // ⚠️ **Empty the cache before asking.** The Settings page just wrote
@@ -142,19 +148,25 @@ test.describe("the board picker", () => {
     // The bootstrap therefore found nothing, and only the row can have
     // produced this. Polled for the same reason as the accent above: this is a
     // value a post-hydration effect writes.
-    await expect.poll(() => domTheme(page)).toBe("light");
+    //
+    // ⚠️ This is now also the stronger claim it always meant to make: the
+    // markup ships `data-theme="light"` as the default, so dark here can ONLY
+    // have come from the row overriding it. A cache hit or a do-nothing
+    // hydration would both leave light in place and fail.
+    await expect.poll(() => domTheme(page)).toBe("dark");
     // …and the cache is now warm, which is what makes the NEXT first paint
     // right before any JavaScript of ours runs.
     await expect
       .poll(() => page.evaluate(() => localStorage.getItem("gantt:theme")))
-      .toBe("light");
+      .toBe("dark");
   });
 
   test("a theme chosen on the picker survives a reload", async ({ page }) => {
     await page.goto("/app");
     await expect(boardCard(page, "My Board")).toBeVisible();
-    // The previous test left `light` on disk.
-    await expect.poll(() => domTheme(page)).toBe("light");
+    // The previous test left `dark` on disk — it selects the non-default
+    // theme, and light is the default.
+    await expect.poll(() => domTheme(page)).toBe("dark");
 
     // ⚠️ `withWrite`, not a bare `page.waitForResponse`. Every Server Action in
     // this app posts to the same URL, so a waiter registered around the click
@@ -163,18 +175,18 @@ test.describe("the board picker", () => {
     // response belonging to one of them. It is also bounded at 5 s, so "no
     // write was issued" reds quickly instead of expiring the whole test.
     await withWrite(page, () =>
-      page.getByTitle("Switch to dark theme").click(),
+      page.getByTitle("Switch to light theme").click(),
     );
-    await expect.poll(() => domTheme(page)).toBe("dark");
+    await expect.poll(() => domTheme(page)).toBe("light");
 
     await page.reload();
     await expect(boardCard(page, "My Board")).toBeVisible();
-    await expect.poll(() => domTheme(page)).toBe("dark");
+    await expect.poll(() => domTheme(page)).toBe("light");
     // …and the row, not just this window: Settings reads it back from SQLite
     // on the server, so a value that only reached `localStorage` fails here.
     await page.goto("/settings");
     await expect(
-      settingControl(page, "Theme").filter({ hasText: "Dark" }),
+      settingControl(page, "Theme").filter({ hasText: "Light" }),
     ).toHaveAttribute("aria-pressed", "true");
   });
 });

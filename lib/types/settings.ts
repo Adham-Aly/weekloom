@@ -93,7 +93,12 @@ export type UserSettings = {
 export type ResolvedSettings = Required<UserSettings>;
 
 export const DEFAULT_SETTINGS: ResolvedSettings = {
-  theme: "dark",
+  /** ⚠️ Must stay in step with the `data-theme` on <html> in `app/layout.tsx`.
+   *  `globals.css` is dark-first, so the markup has to name the light default
+   *  explicitly or the first paint is dark and corrects itself at hydration —
+   *  a flash on every launch. Changing this without changing that reintroduces
+   *  exactly that. */
+  theme: "light",
   /** ⚠️ Off, so a first launch opens on a clean board. This is a DEFAULT, not a
    *  migration: `updateSettings` merges deltas, so the row holds only keys a
    *  person actually changed, and anyone who never touched the toggle has no
