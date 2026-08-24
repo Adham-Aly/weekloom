@@ -1,6 +1,6 @@
 {
   "name": "weekloom",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "private": true,
   "description": "A local-first Gantt chart planner that runs as a desktop app. Your data never leaves your computer.",
   "license": "MIT",
