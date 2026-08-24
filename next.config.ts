@@ -36,6 +36,20 @@ const csp = [
 
 const nextConfig: NextConfig = {
   output: "standalone",
+  /**
+   * ⚠️ Load-bearing for `output: "standalone"`. Next infers the file-tracing
+   * root by walking UP for the outermost lockfile, so a stray
+   * `package-lock.json` in any ancestor directory — a home folder someone once
+   * ran `npm install` in is enough — makes it treat this repo as a workspace
+   * package and emit `.next/standalone/<repo-dir>/server.js` instead of
+   * `.next/standalone/server.js`. `scripts/prepare-standalone.mjs` then copies
+   * `public/` and `.next/static/` next to a `server.js` that isn't there, and
+   * the desktop shell dies with "the application bundle is incomplete".
+   *
+   * Pinning the root to this file's directory makes the build depend only on
+   * the repo, never on where it happens to be cloned.
+   */
+  outputFileTracingRoot: __dirname,
   reactStrictMode: true,
   poweredByHeader: false,
   async headers() {
