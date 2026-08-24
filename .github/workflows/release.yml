@@ -116,9 +116,12 @@ jobs:
             echo "::error::server.js missing from the packaged app"; exit 1; }
           test -d "$APP/resources/app/node_modules" || {
             echo "::error::the server's node_modules did not ship — dead on arrival"; exit 1; }
-          BIN="$(find "$APP" -maxdepth 1 -type f -executable ! -name '*.so*' ! -name '*.bin' \
-                 ! -name '*.pak' ! -name '*.dat' ! -name '*.json' | head -1)"
-          test -n "$BIN" || { echo "::error::no executable in $APP"; exit 1; }
+          # ⚠️ Ask package.json rather than guessing. electron-builder names the
+          # Linux executable after `name`, and the directory also contains
+          # `chrome-sandbox` — Electron's SUID helper, which a "first executable
+          # found" search picks instead, starts, and never serves anything.
+          BIN="$APP/$(node -p "require('./package.json').name")"
+          test -x "$BIN" || { echo "::error::no executable at $BIN"; ls -la "$APP"; exit 1; }
           echo "executable: $BIN"
           ELECTRON_RUN_AS_NODE=1 NODE_ENV=production PORT=3993 HOSTNAME=127.0.0.1 \
             WEEKLOOM_DATA_DIR="$(mktemp -d)" \
