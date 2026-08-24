@@ -1,0 +1,60 @@
+{
+  "fill" : {
+    "linear-gradient" : [
+      "srgb:0.94524,1.00000,0.96054,1.00000",
+      "srgb:1.00000,1.00000,1.00000,1.00000"
+    ],
+    "orientation" : {
+      "start" : {
+        "x" : 0.5,
+        "y" : 0
+      },
+      "stop" : {
+        "x" : 0.5,
+        "y" : 0.7
+      }
+    }
+  },
+  "groups" : [
+    {
+      "layers" : [
+        {
+          "blend-mode" : "normal",
+          "fill" : "none",
+          "glass-specializations" : [
+            {
+              "value" : true
+            },
+            {
+              "idiom" : "square",
+              "value" : true
+            }
+          ],
+          "image-name" : "weekloom-logo.svg",
+          "name" : "weekloom-logo",
+          "position" : {
+            "scale" : 3.5,
+            "translation-in-points" : [
+              0,
+              0
+            ]
+          }
+        }
+      ],
+      "shadow" : {
+        "kind" : "neutral",
+        "opacity" : 0.5
+      },
+      "translucency" : {
+        "enabled" : true,
+        "value" : 0.5
+      }
+    }
+  ],
+  "supported-platforms" : {
+    "circles" : [
+      "watchOS"
+    ],
+    "squares" : "shared"
+  }
+}
