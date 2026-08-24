@@ -14,8 +14,7 @@ brew install --cask moizdev/weekloom/weekloom
 ```
 
 That is the whole thing — it taps, downloads and installs, and Weekloom is in your Applications
-folder. Apple Silicon and Intel both covered. Homebrew asks you once to confirm you trust this
-repository, because the cask lives here rather than in Homebrew's official catalog; answer yes.
+folder, ready to open. Apple Silicon and Intel both covered.
 
 Weekloom is ad-hoc signed rather than notarized with a paid Apple Developer ID, so macOS would
 normally quarantine it and claim it is _"damaged"_. It is not — the cask clears that flag during
