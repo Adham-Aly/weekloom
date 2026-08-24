@@ -12,18 +12,21 @@ it up, delete it to start over.
 ```bash
 brew tap moizdev/weekloom https://github.com/MoizDev/weekloom
 brew trust --cask moizdev/weekloom/weekloom
-brew install --cask --no-quarantine weekloom
+brew install --cask weekloom
+xattr -dr com.apple.quarantine /Applications/Weekloom.app
 ```
 
-The middle line is Homebrew's own safety check on taps outside its official catalogs — it asks you
-to confirm, once, that you trust code from this repository. Skip it and `install` refuses with
-_"Refusing to load cask … from untrusted tap"_.
+**All four lines are needed.** The second is Homebrew's own safety check on taps outside its
+official catalogs — it asks you to confirm, once, that you trust code from this repository. Skip it
+and `install` refuses with _"Refusing to load cask … from untrusted tap"_.
 
-⚠️ **`--no-quarantine` is not optional.** Weekloom is not signed with an Apple Developer ID, so
-macOS quarantines it on download and Gatekeeper refuses to open it — with the actively misleading
-message _"Weekloom is damaged and can't be opened. You should move it to the Trash."_ The app is
-not damaged; the flag simply skips the quarantine attribute that triggers that check. If you
-already installed without it: `xattr -dr com.apple.quarantine /Applications/Weekloom.app`.
+⚠️ **The fourth line is what makes the app open at all.** Weekloom is not signed with an Apple
+Developer ID, so macOS attaches a quarantine flag on download and Gatekeeper then refuses to launch
+it — with the actively misleading message _"Weekloom is damaged and can't be opened. You should
+move it to the Trash."_ Nothing is damaged: the app is ad-hoc signed rather than signed by a paid
+Apple account, and `xattr -dr` clears the flag that triggers the check. Older guides say
+`brew install --cask --no-quarantine`; **that flag no longer exists** — Homebrew removed it, so the
+`xattr` line after installing is the current way.
 
 Both Apple Silicon and Intel are covered. `brew upgrade --cask weekloom` updates,
 `brew uninstall --cask weekloom` removes the app — neither touches `~/.weekloom`, so your plan

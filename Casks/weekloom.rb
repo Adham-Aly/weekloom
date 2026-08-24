@@ -24,14 +24,17 @@ cask "weekloom" do
     "~/Library/Saved Application State/com.weekloom.desktop.savedState",
   ]
 
+  # ⚠️ Homebrew no longer has a `--no-quarantine` flag and offers no way for a
+  # cask to waive quarantine, so this cannot be automated away — the person
+  # installing has to clear the attribute themselves, and will conclude the
+  # download is corrupt if nobody tells them that.
   caveats <<~EOS
-    Weekloom is not signed with an Apple Developer ID, so macOS quarantines it
-    and Gatekeeper reports it as "damaged". Install with:
-
-      brew install --cask --no-quarantine weekloom
-
-    If you already installed it without that flag:
+    Weekloom is ad-hoc signed rather than signed with a paid Apple Developer
+    ID, so macOS has flagged it as quarantined and Gatekeeper will refuse to
+    open it, reporting that it is "damaged". It is not damaged. Clear the flag:
 
       xattr -dr com.apple.quarantine "/Applications/Weekloom.app"
+
+    Then open it normally. This is needed once, not on every launch.
   EOS
 end
