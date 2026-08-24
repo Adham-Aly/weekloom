@@ -10,27 +10,19 @@ it up, delete it to start over.
 ### macOS — Homebrew
 
 ```bash
-brew tap moizdev/weekloom https://github.com/MoizDev/weekloom
-brew trust --cask moizdev/weekloom/weekloom
-brew install --cask weekloom
-xattr -dr com.apple.quarantine /Applications/Weekloom.app
+brew install --cask moizdev/weekloom/weekloom
 ```
 
-**All four lines are needed.** The second is Homebrew's own safety check on taps outside its
-official catalogs — it asks you to confirm, once, that you trust code from this repository. Skip it
-and `install` refuses with _"Refusing to load cask … from untrusted tap"_.
+That is the whole thing — it taps, downloads and installs, and Weekloom is in your Applications
+folder. Apple Silicon and Intel both covered. Homebrew asks you once to confirm you trust this
+repository, because the cask lives here rather than in Homebrew's official catalog; answer yes.
 
-⚠️ **The fourth line is what makes the app open at all.** Weekloom is not signed with an Apple
-Developer ID, so macOS attaches a quarantine flag on download and Gatekeeper then refuses to launch
-it — with the actively misleading message _"Weekloom is damaged and can't be opened. You should
-move it to the Trash."_ Nothing is damaged: the app is ad-hoc signed rather than signed by a paid
-Apple account, and `xattr -dr` clears the flag that triggers the check. Older guides say
-`brew install --cask --no-quarantine`; **that flag no longer exists** — Homebrew removed it, so the
-`xattr` line after installing is the current way.
+Weekloom is ad-hoc signed rather than notarized with a paid Apple Developer ID, so macOS would
+normally quarantine it and claim it is _"damaged"_. It is not — the cask clears that flag during
+install, so the app just opens.
 
-Both Apple Silicon and Intel are covered. `brew upgrade --cask weekloom` updates,
-`brew uninstall --cask weekloom` removes the app — neither touches `~/.weekloom`, so your plan
-survives both.
+`brew upgrade --cask weekloom` updates and `brew uninstall --cask weekloom` removes it. Neither
+touches `~/.weekloom`, so your plan survives both.
 
 ### Windows and Linux
 

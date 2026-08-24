@@ -64,18 +64,17 @@ mac:
     - dmg
     - zip
   category: public.app-category.productivity
-  # ⚠️ An Icon Composer document, NOT a PNG, and that is the whole point: macOS
-  # 26 renders the Dark, Clear and Tinted variants of an app icon ITSELF, from
-  # the layers in this file. A flat `.icns` cannot do that — it is one fixed
-  # image that looks identical in light and dark mode. electron-builder
-  # compiles this into `Resources/Assets.car`, sets `CFBundleIconName`, and
-  # still emits an `.icns` beside it for anything older.
+  # ⚠️ No `icon:` here on purpose — every platform uses `build/icon.png`.
   #
-  # ⚠️ This requires `actool` from **Xcode 26 or newer** — Command Line Tools
-  # alone is NOT enough, and a Mac without full Xcode fails the package step
-  # with "Is Xcode 26 or higher installed?". CI runs `macos-26-arm64`, which
-  # has it. Windows and Linux are unaffected and still use `build/icon.png`.
-  icon: build/Weekloom.icon
+  # electron-builder can consume an Icon Composer `.icon` instead, which is how
+  # macOS 26 draws the Dark and Tinted variants of an app icon by itself. It was
+  # tried and reverted: it needs `actool` from **full Xcode 26**, so any
+  # contributor with only Command Line Tools could no longer run
+  # `npm run package` at all. An adaptive icon is not worth breaking the build
+  # for everyone who does not have a 3 GB Xcode install.
+  #
+  # `build/Weekloom.icon` is kept as the editable source artwork;
+  # `build/icon.png` is rendered from it.
 
 win:
   target:

@@ -24,17 +24,26 @@ cask "weekloom" do
     "~/Library/Saved Application State/com.weekloom.desktop.savedState",
   ]
 
-  # ⚠️ Homebrew no longer has a `--no-quarantine` flag and offers no way for a
-  # cask to waive quarantine, so this cannot be automated away — the person
-  # installing has to clear the attribute themselves, and will conclude the
-  # download is corrupt if nobody tells them that.
+  # ⚠️ Weekloom is ad-hoc signed, not signed with a paid Apple Developer ID, so
+  # macOS quarantines it and Gatekeeper refuses to launch it — reporting that
+  # the app is "damaged", which is false and which people reasonably act on by
+  # deleting it. Homebrew removed `--no-quarantine` and offers no cask-level
+  # way to decline the attribute, so clearing it here is the only way the
+  # install can be a single command that produces a working app.
+  #
+  # This is exactly what the user would otherwise be told to type themselves.
+  # Delete this block the day the app is notarized — it stops being needed, and
+  # a cask that strips quarantine from a NOTARIZED app is only throwing away a
+  # real signal.
+  postflight do
+    system_command "/usr/bin/xattr",
+                   args: ["-dr", "com.apple.quarantine", "#{appdir}/Weekloom.app"],
+                   sudo: false
+  end
+
   caveats <<~EOS
-    Weekloom is ad-hoc signed rather than signed with a paid Apple Developer
-    ID, so macOS has flagged it as quarantined and Gatekeeper will refuse to
-    open it, reporting that it is "damaged". It is not damaged. Clear the flag:
-
-      xattr -dr com.apple.quarantine "/Applications/Weekloom.app"
-
-    Then open it normally. This is needed once, not on every launch.
+    Weekloom is ad-hoc signed rather than notarized with a paid Apple Developer
+    ID. The quarantine flag that would make macOS call it "damaged" has been
+    cleared for you, so it should just open.
   EOS
 end
