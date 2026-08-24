@@ -22,7 +22,9 @@ normally quarantine it and claim it is _"damaged"_. It is not — the cask clear
 install, so the app just opens.
 
 `brew upgrade --cask weekloom` updates and `brew uninstall --cask weekloom` removes it. Neither
-touches `~/.weekloom`, so your plan survives both.
+touches `~/.weekloom`, so your plan survives both. The cask itself lives in
+[MoizDev/homebrew-weekloom](https://github.com/MoizDev/homebrew-weekloom) — Homebrew requires a tap
+repository to be named `homebrew-<name>`, which is why it is not in this one.
 
 ### Windows and Linux
 
