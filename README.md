@@ -5,6 +5,15 @@ a block holds **tasks**, a task spans **steps**, one per day. No account, no sig
 requests — your whole plan is one SQLite file at `~/.weekloom/weekloom.db`; copy that folder to back
 it up, delete it to start over.
 
+![The Gantt view — lanes, tasks and one step per day](docs/01-gantt.png)
+
+The same plan, three ways. Give a step a time and it appears on the calendar; finish it and it
+strikes through.
+
+| Week                           | Day                          |
+| ------------------------------ | ---------------------------- |
+| ![Week view](docs/02-week.png) | ![Day view](docs/03-day.png) |
+
 ## Install
 
 ### macOS — Homebrew
@@ -24,6 +33,22 @@ install, so the app just opens.
 touches `~/.weekloom`, so your plan survives both. The cask itself lives in
 [MoizDev/homebrew-weekloom](https://github.com/MoizDev/homebrew-weekloom) — Homebrew requires a tap
 repository to be named `homebrew-<name>`, which is why it is not in this one.
+
+#### If you downloaded the `.dmg` instead
+
+macOS will tell you **"Weekloom is damaged and can't be opened. You should move it to the Trash."**
+
+**It is not damaged, and you should not trash it.** That message is what macOS says about any app
+that is not signed with a paid Apple Developer ID, whether it is broken or perfectly fine — it
+cannot tell the difference, so it assumes the worst. Drag Weekloom to your Applications folder,
+then run this once:
+
+```bash
+xattr -dr com.apple.quarantine /Applications/Weekloom.app
+```
+
+It opens normally afterwards, and you never need to do it again. Installing with `brew` above skips
+this entirely, because the cask clears the flag for you.
 
 ### Windows and Linux
 

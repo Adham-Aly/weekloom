@@ -90,6 +90,48 @@ jobs:
           APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
 
+      # ⚠️ The only check that a NON-macOS build actually runs. Everything else
+      # in this repository is verified on a Mac; without this the Linux
+      # installer is published having never been started by anyone. It boots
+      # the packaged app's own Next server exactly as `electron/main.ts` does —
+      # ELECTRON_RUN_AS_NODE against the bundled binary — because the failure
+      # this catches is a PACKAGING one: an installer that builds cleanly and
+      # is dead on arrival, which has happened here before (a missing
+      # `node_modules` in extraResources, `Cannot find module 'next'`).
+      #
+      # It deliberately does not open a window. That needs a display server and
+      # would trade a reliable check for a flaky one.
+      - name: Smoke-test the Linux build actually starts
+        if: runner.os == 'Linux'
+        run: |
+          set -euo pipefail
+          # ⚠️ Discovered, not hardcoded. electron-builder names the Linux
+          # executable from package.json `name`, not `productName`, so the
+          # obvious "Weekloom" is wrong — and a hardcoded path that stops
+          # matching turns this check into a silent pass.
+          APP="$(find "$PWD/release" -maxdepth 1 -type d -name '*unpacked*' | head -1)"
+          test -n "$APP" || { echo "::error::no unpacked Linux build found"; exit 1; }
+          echo "unpacked build: $APP"
+          test -f "$APP/resources/app/server.js" || {
+            echo "::error::server.js missing from the packaged app"; exit 1; }
+          test -d "$APP/resources/app/node_modules" || {
+            echo "::error::the server's node_modules did not ship — dead on arrival"; exit 1; }
+          BIN="$(find "$APP" -maxdepth 1 -type f -executable ! -name '*.so*' ! -name '*.bin' \
+                 ! -name '*.pak' ! -name '*.dat' ! -name '*.json' | head -1)"
+          test -n "$BIN" || { echo "::error::no executable in $APP"; exit 1; }
+          echo "executable: $BIN"
+          ELECTRON_RUN_AS_NODE=1 NODE_ENV=production PORT=3993 HOSTNAME=127.0.0.1 \
+            WEEKLOOM_DATA_DIR="$(mktemp -d)" \
+            "$BIN" "$APP/resources/app/server.js" &
+          for i in $(seq 1 60); do
+            if curl -fs http://127.0.0.1:3993/api/health | grep -q '"ok":true'; then
+              echo "Linux build serves /api/health"; exit 0
+            fi
+            sleep 1
+          done
+          echo "::error::the packaged Linux app never answered /api/health"
+          exit 1
+
       # Only the installers. `release/` also holds the unpacked application and
       # electron-builder's own scratch directories, which nobody downloads.
       - uses: actions/upload-artifact@v4
@@ -113,11 +155,46 @@ jobs:
           path: installers
           merge-multiple: true
 
+      # ⚠️ The install notes are not decoration. Most people arrive at a release
+      # page from a link, download the .dmg, and are then told by macOS that
+      # the app is "damaged" — which is what it says about anything not signed
+      # with a paid Apple Developer ID, broken or not. Someone who reads that
+      # with no explanation in front of them concludes the download is corrupt
+      # or hostile. Remove this only when the app is notarized.
       - name: Publish the release
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh release create "${GITHUB_REF_NAME}"
-          --repo "${GITHUB_REPOSITORY}"
-          --title "${GITHUB_REF_NAME}"
-          --generate-notes
-          installers/*
+        run: |
+          cat > notes.md <<'EOF'
+          ## Install
+
+          **macOS — one command, nothing else needed:**
+
+          ```bash
+          brew install --cask moizdev/weekloom/weekloom
+          ```
+
+          **Downloaded the `.dmg` instead?** macOS will call Weekloom "damaged".
+          It is not — it is unsigned, and macOS cannot tell the two apart. Move
+          it to Applications, then run this once:
+
+          ```bash
+          xattr -dr com.apple.quarantine /Applications/Weekloom.app
+          ```
+
+          **Windows:** run the `.exe`. SmartScreen warns about an unknown
+          publisher for the same reason — "More info" → "Run anyway".
+
+          **Linux:** the `.AppImage` or the `.deb`.
+
+          Your data lives in `~/.weekloom` and is never touched by installing,
+          upgrading or removing the app.
+
+          ---
+          EOF
+          gh release create "${GITHUB_REF_NAME}" \
+            --repo "${GITHUB_REPOSITORY}" \
+            --title "${GITHUB_REF_NAME}" \
+            --notes-file notes.md \
+            --generate-notes \
+            installers/*
