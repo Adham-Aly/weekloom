@@ -23,6 +23,12 @@ on:
 permissions:
   contents: write
 
+# `secrets` cannot be read from a step-level `if:`, so the one question the
+# packaging steps need answered — is there a signing certificate? — is decided
+# once here, where `secrets` IS in scope, and read back as `env`.
+env:
+  HAS_MAC_SIGNING: ${{ secrets.CSC_LINK != '' }}
+
 jobs:
   build:
     name: ${{ matrix.name }}
@@ -62,14 +68,24 @@ jobs:
 
       - run: npm run app:build
 
-      - name: Package
+      # ⚠️ Two steps rather than one with conditional `env:`, and that is not a
+      # style choice. A secret that does not exist expands to the EMPTY STRING,
+      # not to nothing, and electron-builder reads an empty `CSC_LINK` as a
+      # certificate PATH — it resolves to the workspace directory and the build
+      # dies with `⨯ /Users/runner/work/weekloom/weekloom not a file`. The only
+      # way to leave the variable genuinely unset is to omit the step.
+      - name: Package (unsigned)
+        if: env.HAS_MAC_SIGNING != 'true'
         run: npx electron-builder ${{ matrix.args }} --publish never
         env:
-          # Signs and notarizes when the secrets exist; ad-hoc signs when they
-          # do not, rather than failing the build.
+          CSC_IDENTITY_AUTO_DISCOVERY: false
+
+      - name: Package (signed and notarized)
+        if: env.HAS_MAC_SIGNING == 'true'
+        run: npx electron-builder ${{ matrix.args }} --publish never
+        env:
           CSC_LINK: ${{ secrets.CSC_LINK }}
           CSC_KEY_PASSWORD: ${{ secrets.CSC_KEY_PASSWORD }}
-          CSC_IDENTITY_AUTO_DISCOVERY: ${{ secrets.CSC_LINK != '' }}
           APPLE_ID: ${{ secrets.APPLE_ID }}
           APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}

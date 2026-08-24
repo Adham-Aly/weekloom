@@ -74,3 +74,10 @@ linux:
     - AppImage
     - deb
   category: Office
+  # ⚠️ Required, and only by the `deb` target: a Debian package carries a
+  # Maintainer control field, and electron-builder refuses to build without
+  # something to put in it — "Please specify author 'email' in the application
+  # package.json". Set here rather than as a `package.json` author so the
+  # dependency manifest that `tests/no-cloud-imports.test.ts` enumerates stays
+  # untouched.
+  maintainer: MoizDev <103186123+MoizDev@users.noreply.github.com>
