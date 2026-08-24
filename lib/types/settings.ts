@@ -94,7 +94,13 @@ export type ResolvedSettings = Required<UserSettings>;
 
 export const DEFAULT_SETTINGS: ResolvedSettings = {
   theme: "dark",
-  gridlines: true,
+  /** ⚠️ Off, so a first launch opens on a clean board. This is a DEFAULT, not a
+   *  migration: `updateSettings` merges deltas, so the row holds only keys a
+   *  person actually changed, and anyone who never touched the toggle has no
+   *  `gridlines` key to resolve from. Flipping this therefore also turns
+   *  gridlines off for existing users who left it alone — which is the intent,
+   *  but it is why the change is not invisible to them. */
+  gridlines: false,
   gridlinesOpacity: 0.04,
   pastDays: 2,
   pastDaysExpanded: 30,
@@ -187,7 +193,9 @@ export function settingsDelta(
   after: ResolvedSettings,
 ): Partial<ResolvedSettings> {
   const out: Record<string, unknown> = {};
-  for (const key of Object.keys(DEFAULT_SETTINGS) as (keyof ResolvedSettings)[]) {
+  for (const key of Object.keys(
+    DEFAULT_SETTINGS,
+  ) as (keyof ResolvedSettings)[]) {
     if (JSON.stringify(before[key]) !== JSON.stringify(after[key])) {
       out[key] = after[key];
     }
