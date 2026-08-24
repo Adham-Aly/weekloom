@@ -1,0 +1,346 @@
+@import "tailwindcss";
+
+/* Global UI density: the whole app renders at ~90% of its originally designed
+ * size (the "90% browser zoom" look, made permanent — July 2026). Two layers:
+ *   1. This rule — every rem-based value (Tailwind spacing, default text
+ *      sizes, width/height utilities, menus, modals) scales down together.
+ *   2. Arbitrary px text classes were swept x0.9 in the components
+ *      (text-[13px] became text-[11.7px], etc.).
+ * Deliberately NOT done with CSS zoom: zoom rescales rendering but not the
+ * pointer coordinate space, which silently breaks every drag interaction
+ * (item move, resize handles, marquee, calendar pan) that mixes clientX
+ * deltas with JS px constants. Keeping real CSS px consistent avoids that
+ * entire class of bug. */
+html {
+  font-size: 90%;
+}
+
+:root {
+  /* Dark by default — Linear-inspired palette */
+  --bg: #08090d;
+  --bg-elev: #0e0f14;
+  --surface: #14151b;
+  --surface-hover: #1a1c23;
+  --border: rgba(255, 255, 255, 0.06);
+  --border-strong: color-mix(in srgb, var(--text) 12%, transparent);
+  --text: #e7e8ea;
+  --text-muted: #8b8d97;
+  --text-dim: #5a5c66;
+  --accent: #3b82f6;
+  --accent-dim: #2563eb;
+  --today: rgba(59, 130, 246, 0.08);
+  --today-line: var(--accent);
+  /* Frosted-panel fill (menus, popovers, modal shells). Deep glass on dark;
+   * light mode overrides to near-opaque — 28% transparency over a colourful
+   * board reads as grey murk with colour bleed there. */
+  --frost: color-mix(in srgb, var(--bg-elev) 72%, transparent);
+  --deadline: #ef4444;
+  --am: #7dd3fc;
+  --pm: #fb923c;
+  --am-bg: rgba(125, 211, 252, 0.18);
+  --am-border: rgba(125, 211, 252, 0.55);
+  --am-text: #7dd3fc;
+  --pm-bg: rgba(251, 146, 60, 0.18);
+  --pm-border: rgba(251, 146, 60, 0.55);
+  --pm-text: #fb923c;
+  --deadline-bg: rgba(239, 68, 68, 0.22);
+  --deadline-border: rgba(239, 68, 68, 0.55);
+  --deadline-text: #ffb4b4;
+  --urgent-bg: rgba(245, 158, 11, 0.22);
+  --urgent-border: rgba(245, 158, 11, 0.55);
+  --urgent-text: #fcd34d;
+  --bar-text: #fafafa;
+  --tbd-text: #f5f5f7;
+  --gridline-rgb: 255, 255, 255;
+  --scrollbar-thumb: rgba(255, 255, 255, 0.06);
+  --scrollbar-thumb-hover: rgba(255, 255, 255, 0.12);
+  /* Mini-calendar "current week" band — lightens on dark, darkens on light. */
+  --week-band: rgba(255, 255, 255, 0.08);
+}
+
+[data-theme="light"] {
+  --bg: #ffffff;
+  --bg-elev: #ffffff;
+  --frost: color-mix(in srgb, var(--bg-elev) 93%, transparent);
+  --surface: #f4f4f5;
+  --surface-hover: #e4e4e7;
+  --border: rgba(0, 0, 0, 0.08);
+  --border-strong: color-mix(in srgb, var(--text) 12%, transparent);
+  --text: #18181b;
+  --text-muted: #52525b;
+  --text-dim: #a1a1aa;
+  --accent: #2563eb;
+  --accent-dim: #1d4ed8;
+  --today: rgba(37, 99, 235, 0.07);
+  --today-line: var(--accent);
+  --week-band: rgba(0, 0, 0, 0.05);
+  --deadline: #dc2626;
+  --am: #0284c7;
+  --pm: #ea580c;
+  --am-bg: rgba(56, 189, 248, 0.28);
+  --am-border: rgba(2, 132, 199, 0.7);
+  --am-text: #0369a1;
+  --pm-bg: rgba(251, 146, 60, 0.32);
+  --pm-border: rgba(234, 88, 12, 0.7);
+  --pm-text: #c2410c;
+  --deadline-bg: rgba(248, 113, 113, 0.28);
+  --deadline-border: rgba(220, 38, 38, 0.65);
+  --deadline-text: #b91c1c;
+  --urgent-bg: rgba(251, 191, 36, 0.32);
+  --urgent-border: rgba(217, 119, 6, 0.7);
+  --urgent-text: #b45309;
+  --bar-text: #ffffff;
+  --tbd-text: #1f2937;
+  --gridline-rgb: 0, 0, 0;
+  --scrollbar-thumb: rgba(0, 0, 0, 0.12);
+  --scrollbar-thumb-hover: rgba(0, 0, 0, 0.22);
+}
+
+@theme inline {
+  --color-bg: var(--bg);
+  --color-bg-elev: var(--bg-elev);
+  --color-surface: var(--surface);
+  --color-surface-hover: var(--surface-hover);
+  --color-border: var(--border);
+  --color-border-strong: var(--border-strong);
+  --color-text: var(--text);
+  --color-text-muted: var(--text-muted);
+  --color-text-dim: var(--text-dim);
+  --color-accent: var(--accent);
+  --color-deadline: var(--deadline);
+  --color-am: var(--am);
+  --color-pm: var(--pm);
+  /* Google Sans is the primary UI face; Geist is the fallback. */
+  --font-sans: var(--font-google-sans), var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+html {
+  /* Smooth in-page anchor scrolling (TOC links, nav section anchors). */
+  scroll-behavior: smooth;
+}
+
+html,
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-sans), system-ui, sans-serif;
+  font-feature-settings: "ss01", "cv11";
+  -webkit-font-smoothing: antialiased;
+  /* A horizontal two-finger swipe must never become the browser's
+     back/forward navigation — it's a calendar pan gesture in-app, and the
+     calendar's own wheel listener can't cover swipes that start over other
+     surfaces (sidebar, top bar). */
+  overscroll-behavior-x: none;
+}
+
+/* Day columns in the calendar's pannable strip are scroll-snap points (the
+   Notion model: native scroll + CSS snap). OPT-IN by [data-cal-day], never a
+   bare child selector: browser extensions (VPNs, page-capture tools) inject
+   <script>/<div> nodes into arbitrary containers, and an injected child of the
+   strip would become a phantom snap target — the scroller then oscillates
+   toward a node that isn't a day, which reads as jitter/jumping and floods the
+   settle logic with bogus commits. Foreign nodes must stay inert. */
+[data-cal-strip] > [data-cal-day] {
+  scroll-snap-align: start;
+}
+
+/* Touch devices: the per-step done-toggle is hover-gated on desktop
+   (opacity-0 group-hover:opacity-100). Hover doesn't exist on touch,
+   so the button would be invisible+unreachable. Force it visible
+   whenever the device has no hover capability. */
+@media (hover: none) {
+  [data-done-toggle] {
+    opacity: 1 !important;
+  }
+}
+
+/* Two-pulse green flash used by the search "scroll to item" affordance.
+   Picks up an overlay div with `data-search-flash` set; the overlay sits
+   over the item header row only (not the steps below) so the search
+   highlight points at the task bar specifically. */
+@keyframes searchFlashPulse {
+  0%,
+  100% {
+    background: rgba(34, 197, 94, 0);
+  }
+  20%,
+  70% {
+    background: rgba(34, 197, 94, 0.1);
+  }
+}
+[data-search-flash] {
+  animation: searchFlashPulse 0.55s ease-in-out 2;
+  pointer-events: none;
+}
+
+/* Excel-style marching ants. Four background-image stripes painted
+   exactly where the static `border: dashed` would land; animating
+   background-position by one tile (12px) per cycle makes the dashes
+   appear to march around the perimeter. The underlying dashed border
+   stays as a visual fallback in case the animation doesn't paint. */
+@keyframes marchingAnts {
+  to {
+    background-position:
+      12px 0,
+      -12px 100%,
+      0 -12px,
+      100% 12px;
+  }
+}
+.marching-ants {
+  background-image:
+    linear-gradient(90deg, var(--accent) 50%, transparent 50%),
+    linear-gradient(90deg, var(--accent) 50%, transparent 50%),
+    linear-gradient(0deg, var(--accent) 50%, transparent 50%),
+    linear-gradient(0deg, var(--accent) 50%, transparent 50%);
+  background-repeat: repeat-x, repeat-x, repeat-y, repeat-y;
+  /* Per-edge sizing — when an edge is suppressed (adjacency to
+     another copied row), the inline style zeroes its stripe size so
+     the stripes don't paint a fake seam between rows. */
+  background-size:
+    var(--ants-top, 12px 2px), var(--ants-bot, 12px 2px),
+    var(--ants-left, 2px 12px), var(--ants-right, 2px 12px);
+  background-position:
+    0 0,
+    0 100%,
+    0 0,
+    100% 0;
+  animation: marchingAnts 0.8s linear infinite;
+}
+
+/* Opt-in scrollbar-hiding utility. Used by the week/day calendar's
+   scroll body so it can scroll without an always-visible gutter that
+   shifts the layout (and on mobile, the floating bottom nav). */
+.no-scrollbar {
+  scrollbar-width: none;
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--scrollbar-thumb);
+  border-radius: 8px;
+  border: 2px solid var(--bg);
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--scrollbar-thumb-hover);
+}
+
+.gantt-stripes {
+  background-image: repeating-linear-gradient(
+    -45deg,
+    transparent 0,
+    transparent 6px,
+    rgba(255, 255, 255, 0.02) 6px,
+    rgba(255, 255, 255, 0.02) 7px
+  );
+}
+
+.task-bar {
+  transition:
+    filter 120ms ease,
+    background 120ms ease;
+}
+.task-bar:hover {
+  /* Deepen the tint by boosting saturation (not brightness) — the colour gets
+   *  richer on hover instead of lighter/darker. Works the same in both themes. */
+  filter: saturate(1.7);
+}
+
+*:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: 6px;
+}
+/* Form fields opt out of the big a11y ring: they indicate focus with their
+ * own quiet accent hairline (focus:border-accent). This rule is unlayered on
+ * purpose — Tailwind v4 utilities live in a cascade layer, so utility
+ * `focus:outline-none` can never beat the unlayered ring above; this can. */
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible,
+[contenteditable]:focus-visible {
+  outline: none;
+}
+
+/* Sidebar-collapsed mode: hide every sticky-left sidebar cell's contents
+ * so the 28px strip shows nothing but the expand chevron. The selector
+ * uses an explicit `data-gantt-sidebar` attribute (added by hand to each
+ * cell) — previous attempts to identify cells via style-substring
+ * accidentally matched row wrappers (calc()) too and hid the timeline.
+ *
+ * The expand chevron carries `data-keep` to opt out.
+ */
+[data-sidebar-collapsed="true"] [data-gantt-sidebar] > *:not([data-keep]) {
+  display: none !important;
+}
+
+/* Force a uniform 28px strip when collapsed — every cell, regardless of
+ * its base classes, gets the same background, zero padding, and the same
+ * border-right. Without this, the bg-bg vs bg-bg-elev mismatch between
+ * step-row / item-header / block-header sidebars reads as a zigzag along
+ * the collapsed strip's left edge.
+ */
+[data-sidebar-collapsed="true"] [data-gantt-sidebar] {
+  padding: 0 !important;
+  background: var(--bg-elev) !important;
+  border-right-color: var(--border) !important;
+  justify-content: center !important;
+}
+
+/* ── Skeleton loading placeholders ─────────────────────────────────────────
+ * Route-transition skeletons (components/skeletons/, wired up by the
+ * loading.tsx files under app/) paint every placeholder box with
+ * .wl-skeleton: a token-coloured surface plus a slow highlight sweep.
+ *
+ * The sweep is a ::after overlay rather than an animated background-position
+ * so it composites on the GPU — a board skeleton paints ~40 of these at once
+ * and animating background-position on each would repaint every frame. */
+@keyframes wlSkeletonSweep {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(100%);
+  }
+}
+
+.wl-skeleton {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+  background: var(--surface);
+}
+
+.wl-skeleton::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    color-mix(in srgb, var(--text) 8%, transparent) 50%,
+    transparent 100%
+  );
+  animation: wlSkeletonSweep 1.5s ease-in-out infinite;
+}
+
+/* The repo has no other prefers-reduced-motion handling yet; a skeleton is
+ * the wrong place to start ignoring it, since it is the one animation a user
+ * cannot dismiss. Dropping the animation leaves the sweep parked at its
+ * untransformed centre, which reads as a soft static sheen rather than a
+ * flat grey box. */
+@media (prefers-reduced-motion: reduce) {
+  .wl-skeleton::after {
+    animation: none;
+  }
+}

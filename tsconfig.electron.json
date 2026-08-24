@@ -1,0 +1,17 @@
+{
+  "compilerOptions": {
+    "target": "ES2023",
+    "lib": ["ES2023"],
+    "module": "CommonJS",
+    "moduleResolution": "node",
+    "types": ["node", "electron"],
+    "strict": true,
+    "noEmit": false,
+    "outDir": "electron/dist",
+    "rootDir": "electron",
+    "esModuleInterop": true,
+    "skipLibCheck": true
+  },
+  "include": ["electron/**/*.ts"],
+  "exclude": ["electron/dist"]
+}

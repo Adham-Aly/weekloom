@@ -1,0 +1,10 @@
+.next
+node_modules
+coverage
+out
+build
+electron/dist
+release
+playwright-report
+test-results
+package-lock.json

@@ -1,0 +1,76 @@
+appId: com.weekloom.desktop
+productName: Weekloom
+copyright: Weekloom contributors
+
+directories:
+  output: release
+  buildResources: build
+
+# Only the compiled main process and the manifest go INSIDE the asar archive.
+# The Next server deliberately does not — see extraResources below.
+#
+# ⚠️ The `!node_modules` negation is load-bearing and must not be dropped.
+# electron-builder copies the production dependency tree into the asar unless
+# it is explicitly excluded, and `files` patterns alone do NOT exclude it.
+# MEASURED without this line: a 234 MB asar carrying 21,502 node_modules
+# entries that nothing ever loads — the main process imports only `electron`
+# and node builtins — plus `@img/sharp` and `@next/swc`'s NATIVE binaries,
+# which dragged in an `@electron/rebuild` pass and a 95 MB
+# `app.asar.unpacked/`. That is precisely the native-addon machinery this
+# project avoids by using `node:sqlite`, reintroduced by accident through a
+# transitive dependency of `next`.
+files:
+  - electron/dist/**/*
+  - package.json
+  - "!node_modules/**/*"
+
+# ⚠️ `.next/standalone` ships as extraResources, i.e. OUTSIDE the asar, landing
+# at `<resources>/app`. The decisive reason is not size or startup time:
+# `server.js` calls `process.chdir(__dirname)` as its third statement, and
+# **you cannot chdir into an asar archive** — it is a virtual filesystem, not a
+# real directory. It also `require`s chunks from disk at runtime, which asar
+# only partially emulates.
+#
+# The second and third entries are the two directories `output: "standalone"`
+# does not copy (`scripts/prepare-standalone.mjs` says the same thing for the
+# unpackaged run). Without them the packaged app opens unstyled.
+extraResources:
+  - from: .next/standalone
+    to: app
+  # ⚠️ **The Next server's own node_modules needs its own entry.** MEASURED,
+  # and it is the difference between a working installer and one that cannot
+  # start: copying `.next/standalone` does NOT bring its `node_modules` across,
+  # so `server.js` — whose first statements `require('next')` — died instantly
+  # with `Error: Cannot find module 'next'`. The shell then spent three
+  # start attempts on it and showed "The Weekloom server did not become ready
+  # after three attempts." Nothing else in the build reports this: the
+  # installer is produced successfully and is simply dead on arrival, which is
+  # why the build skill's verification step launches the packaged app rather
+  # than trusting an exit code.
+  - from: .next/standalone/node_modules
+    to: app/node_modules
+  - from: .next/static
+    to: app/.next/static
+  - from: public
+    to: app/public
+
+# ⚠️ No `asarUnpack`, no `@electron/rebuild`, no native rebuild step — that is
+# the whole payoff of using `node:sqlite` instead of a native addon. If a future
+# change adds a native dependency, all three come back, plus a second build of
+# that addon against the host Node so `npm test` can load it.
+
+mac:
+  target:
+    - dmg
+    - zip
+  category: public.app-category.productivity
+
+win:
+  target:
+    - nsis
+
+linux:
+  target:
+    - AppImage
+    - deb
+  category: Office
