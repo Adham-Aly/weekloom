@@ -135,6 +135,45 @@ jobs:
           echo "::error::the packaged Linux app never answered /api/health"
           exit 1
 
+      # ⚠️ Same reasoning as the Linux step, on the platform most people will
+      # actually download. It cannot open a window — that needs a desktop
+      # session — but the window is not where packaged builds break. They break
+      # because a resource did not ship, and the server then dies on its first
+      # statement while the installer reports success.
+      #
+      # PowerShell, not bash: the runner's default shell on Windows.
+      - name: Smoke-test the Windows build actually starts
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $app = Join-Path $PWD "release\win-unpacked"
+          if (-not (Test-Path $app)) { Write-Error "no unpacked Windows build at $app"; exit 1 }
+          $server = Join-Path $app "resources\app\server.js"
+          if (-not (Test-Path $server)) { Write-Error "server.js missing from the packaged app"; exit 1 }
+          if (-not (Test-Path (Join-Path $app "resources\app\node_modules"))) {
+            Write-Error "the server's node_modules did not ship - dead on arrival"; exit 1 }
+          # electron-builder names the Windows executable after productName.
+          $exe = Get-ChildItem $app -Filter *.exe | Select-Object -First 1
+          if (-not $exe) { Write-Error "no .exe in $app"; Get-ChildItem $app; exit 1 }
+          Write-Host "executable: $($exe.FullName)"
+          $env:ELECTRON_RUN_AS_NODE = "1"; $env:NODE_ENV = "production"
+          $env:PORT = "3993"; $env:HOSTNAME = "127.0.0.1"
+          $env:WEEKLOOM_DATA_DIR = (New-Item -ItemType Directory -Path (Join-Path $env:TEMP "wl-smoke")).FullName
+          $p = Start-Process -FilePath $exe.FullName -ArgumentList $server -PassThru -NoNewWindow
+          foreach ($i in 1..60) {
+            try {
+              $r = Invoke-WebRequest -Uri "http://127.0.0.1:3993/api/health" -UseBasicParsing -TimeoutSec 2
+              if ($r.Content -match '"ok":true') {
+                Write-Host "Windows build serves /api/health"
+                Stop-Process -Id $p.Id -Force -ErrorAction SilentlyContinue
+                exit 0
+              }
+            } catch { Start-Sleep -Seconds 1 }
+          }
+          Stop-Process -Id $p.Id -Force -ErrorAction SilentlyContinue
+          Write-Error "the packaged Windows app never answered /api/health"
+          exit 1
+
       # Only the installers. `release/` also holds the unpacked application and
       # electron-builder's own scratch directories, which nobody downloads.
       - uses: actions/upload-artifact@v4
