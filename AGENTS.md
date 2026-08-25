@@ -4,7 +4,7 @@ Guidance for AI agents working in this repository.
 
 ⚠️ **This file is capped at 250 lines and is maintained ZERO-SUM.** See **Maintenance** at the
 bottom before you add anything to it. Detail that has a detectable trigger lives in a skill under
-`.agents/skills/`, not here — the table near the end says which.
+`.agents/skills/`, not here — see **Where the detail lives**.
 
 ## Project
 
@@ -200,18 +200,10 @@ standalone build, never `next dev`, on a throwaway `WEEKLOOM_DATA_DIR` under the
 
 ## Where the detail lives
 
-Each is a skill under `.agents/skills/`, loaded on its trigger. **Read the relevant one before
-working in that area** rather than inferring the rules from the code.
-
-| skill                      | read it when                                                                                            |
-| -------------------------- | ------------------------------------------------------------------------------------------------------- |
-| `sqlite-data-layer`        | changing the schema, writing a migration, anything under `lib/db/`, a binding or cascade bug            |
-| `recurring-series`         | recurrence, `materializeSeries`, `applyItemMove`, `origin_day_offset`, duplicated or frozen occurrences |
-| `settings-and-persistence` | adding or removing a settings key, `updateSettings`, the debounced auto-save, `localStorage`            |
-| `weekloom-ui`              | any component work — styling, popovers, the Escape stack, drags, skeletons, the T/E chip                |
-| `guard-tests`              | writing or editing anything under `tests/`, or when a guard test fails                                  |
-| `build-electron-app`       | building, packaging, producing an installer, or verifying one actually starts                           |
-| `e2e-playwright`           | running or writing end-to-end tests                                                                     |
+Each skill under `.agents/skills/` carries the rules for one area and states in its own description
+when it applies — that description IS the routing, and a table of triggers here would only be a
+second copy of it, free to drift out of date. **Read the relevant skill before working in its area**
+rather than inferring the rules from the code.
 
 ## Maintenance
 
